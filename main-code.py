@@ -24,7 +24,7 @@ pygame.init()
 # Define constants and create game window
 WIN_WIDTH = 800
 WIN_HEIGHT = 800
-dif = 500 / 9
+scaling = 800 / 9
 STAT_FONT = pygame.font.SysFont("calibri", 50)
 win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 pygame.display.set_caption("Sudoku Solver")
@@ -35,15 +35,16 @@ def draw():  # Draw the Sudoku board
     for i in range(9):
         for j in range(9):
             # Filling the squares in, can change this to just certain squares and different colours
-            pygame.draw.rect(win, (255, 255, 255), (i * dif, j * dif, dif + 1, dif + 1))
+            pygame.draw.rect(win, (255, 255, 255), (int(i * scaling), int(j * scaling),
+                                                    int(scaling + 1), int(scaling + 1)))
 
     for i in range(10):  # Drawing the lines with varying thickness, and horrible colours
         if i % 3 == 0:
             thickness = 5
         else:
             thickness = 1
-        pygame.draw.line(win, (255, 0, 0), (0, i * dif), (500, i * dif), thickness)
-        pygame.draw.line(win, (255, 255, 0), (i * dif, 0), (i * dif, 500), thickness)
+        pygame.draw.line(win, (0, 0, 0), (0, i * scaling), (9 * scaling, i * scaling), thickness)
+        pygame.draw.line(win, (0, 0, 0), (i * scaling, 0), (i * scaling, 9 * scaling), thickness)
 
 
 # Main loop
@@ -55,10 +56,6 @@ while run:
             run = False
             pygame.quit()
             quit()
-
-    number = STAT_FONT.render(str(5), 1, (255, 255, 255))
-    numberRect = number.get_rect()
-    win.blit(number, numberRect)
 
     draw()
 
