@@ -4,20 +4,20 @@ Created on Dec 5th 2020
 @authors: James Taylor, Jack Taylor
 """
 
-import math
 import pygame
 import numpy as np
 
 
-# Function to create a blank puzzle object @Jack
+# Create a blank puzzle object @Jack
 def create_puzzle():
-    puzzle = np.zeros((9, 9), int)
 
+    puzzle = np.zeros((9, 9), int)
     return puzzle
 
 
-# Function to populate a puzzle with initial numbers @Jack
+# Populate a puzzle object with initial numbers @Jack
 def populate_puzzle(puzzle):
+
     # Random test numbers
     puzzle[1, 1] = 3
     puzzle[3, 4] = 9
@@ -27,10 +27,67 @@ def populate_puzzle(puzzle):
 
     return puzzle
 
-# Function to take a puzzle with initial numbers and complete it @James
+
+# Locate the next empty square of the puzzle @James
+def find_square(puzzle):
+
+    for i in range(9):
+        for j in range(9):
+            if puzzle[i][j] == 0:
+                return i, j
 
 
-# Function to take a puzzle with initial numbers and complete it @James
+# Check if a value can go in a square @James
+def validate(puzzle, value, location):
+
+    for i in range(9):  # Rows
+        if puzzle[location[0]][i] == value and location[1] != i:
+            return False
+
+    for i in range(9):  # Columns
+        if puzzle[i][location[1]] == value and location[0] != i:
+            return False
+
+    # Boxes
+    box_x = location[1] // 3
+    box_y = location[0] // 3
+
+    for i in range(box_y * 3, box_y * 3 + 3):
+        for j in range(box_x * 3, box_x * 3 + 3):
+            if puzzle[i][j] == value and (i, j) != location:
+                return False
+
+    return True
+
+
+# Take a puzzle with initial numbers and complete it @James
+def solve_puzzle(puzzle):
+
+    empty_square = find_square(puzzle)
+
+    if not empty_square:
+        return True
+    else:
+        x, y = empty_square
+
+    for i in range(1, 10):
+        if validate(puzzle, i, (x, y)):
+            puzzle[x][y] = i
+
+            if solve_puzzle(puzzle):
+                return True
+
+            puzzle[x][y] = 0
+
+    return False
+
+
+empty = create_puzzle()
+print(empty)
+filled = populate_puzzle(empty)
+print(filled)
+solve_puzzle(filled)
+print(filled)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # ~~~~~~~~~~~~~~~~~~ Display a puzzle in a Pygame window ~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -66,7 +123,7 @@ def draw():  # Draw the Sudoku board
 # Main loop
 run = False
 while run:
-    clock.tick(20)  # 20 frames per second
+    clock.tick(1)  # 1 frame(s) per second
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
