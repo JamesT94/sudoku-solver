@@ -10,8 +10,6 @@ import numpy as np
 
 
 # Function to create a blank puzzle object @Jack
-
-
 def create_puzzle():
     puzzle = np.zeros((9, 9), int)
 
@@ -29,12 +27,8 @@ def populate_puzzle(puzzle):
 
     return puzzle
 
-
-# Function to print a puzzle to the console in a way that is readable @Jack
 # Function to take a puzzle with initial numbers and complete it @James
-x = create_puzzle()
-y = populate_puzzle(x)
-print(y)
+
 
 # Function to take a puzzle with initial numbers and complete it @James
 
@@ -70,7 +64,7 @@ def draw():  # Draw the Sudoku board
 
 
 # Main loop
-run = True
+run = False
 while run:
     clock.tick(20)  # 20 frames per second
     for event in pygame.event.get():
