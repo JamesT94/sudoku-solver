@@ -10,14 +10,12 @@ import numpy as np
 
 # Create a blank puzzle object @Jack
 def create_puzzle():
-
     puzzle = np.zeros((9, 9), int)
     return puzzle
 
 
 # Populate a puzzle object with initial numbers @Jack
 def populate_puzzle(puzzle):
-
     # Random test numbers
     puzzle[1, 1] = 3
     puzzle[3, 4] = 9
@@ -30,7 +28,6 @@ def populate_puzzle(puzzle):
 
 # Locate the next empty square of the puzzle @James
 def find_square(puzzle):
-
     for i in range(9):
         for j in range(9):
             if puzzle[i][j] == 0:
@@ -39,7 +36,6 @@ def find_square(puzzle):
 
 # Check if a value can go in a square @James
 def validate(puzzle, value, location):
-
     for i in range(9):  # Rows
         if puzzle[location[0]][i] == value and location[1] != i:
             return False
@@ -60,35 +56,6 @@ def validate(puzzle, value, location):
     return True
 
 
-# Take a puzzle with initial numbers and complete it @James
-def solve_puzzle(puzzle):
-
-    empty_square = find_square(puzzle)
-
-    if not empty_square:
-        return True
-    else:
-        x, y = empty_square
-
-    for i in range(1, 10):
-        if validate(puzzle, i, (x, y)):
-            puzzle[x][y] = i
-
-            if solve_puzzle(puzzle):
-                return True
-
-            puzzle[x][y] = 0
-
-    return False
-
-
-empty = create_puzzle()
-print(empty)
-filled = populate_puzzle(empty)
-print(filled)
-solve_puzzle(filled)
-print(filled)
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # ~~~~~~~~~~~~~~~~~~ Display a puzzle in a Pygame window ~~~~~~~~~~~~~~~~~~~~~~~ #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -97,41 +64,120 @@ pygame.init()
 # Define constants and create game window
 WIN_WIDTH = 800
 WIN_HEIGHT = 800
-scaling = 800 / 9
-STAT_FONT = pygame.font.SysFont("calibri", 50)
-win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
-pygame.display.set_caption("Sudoku Solver")
+scaling = WIN_WIDTH / 9
+FONT = pygame.font.SysFont("calibri", 50)
 clock = pygame.time.Clock()
 
 
-def draw():  # Draw the Sudoku board
-    for i in range(9):
-        for j in range(9):
-            # Filling the squares in, can change this to just certain squares and different colours
-            pygame.draw.rect(win, (255, 255, 255), (int(i * scaling), int(j * scaling),
-                                                    int(scaling + 1), int(scaling + 1)))
+class Puzzle:
+    board = populate_puzzle(create_puzzle())
 
-    for i in range(10):  # Drawing the lines with varying thickness, and horrible colours
-        if i % 3 == 0:
-            thickness = 5
+    def __init__(self, rows, cols, width, height):
+        self.rows = rows
+        self.cols = cols
+        self.width = width
+        self.height = height
+        self.cubes = [[Cube(self.board[i][j], i, j, width, height) for j in range(cols)] for i in range(rows)]
+
+    def draw(self, display):  # Draw the Sudoku board
+
+        for i in range(10):  # Draw the lines
+            if i % 3 == 0:
+                thickness = 5
+            else:
+                thickness = 1
+            pygame.draw.line(display, (0, 0, 0), (0, i * scaling), (9 * scaling, i * scaling), thickness)
+            pygame.draw.line(display, (0, 0, 0), (i * scaling, 0), (i * scaling, 9 * scaling), thickness)
+
+        for i in range(self.rows):  # Draw the cubes
+            for j in range(self.cols):
+                self.cubes[i][j].draw(display)
+
+    def update_cubes(self, board):
+        for i in range(self.rows):  # Draw the cubes
+            for j in range(self.cols):
+                self.cubes[i][j].value = board[i][j]
+
+    def solve_puzzle(self, board):
+        empty_square = find_square(board)
+
+        if not empty_square:
+            self.update_cubes(board)
+            return True
+
         else:
-            thickness = 1
-        pygame.draw.line(win, (0, 0, 0), (0, i * scaling), (9 * scaling, i * scaling), thickness)
-        pygame.draw.line(win, (0, 0, 0), (i * scaling, 0), (i * scaling, 9 * scaling), thickness)
+            x, y = empty_square
+
+        for i in range(1, 10):
+            if validate(board, i, (x, y)):
+                board[x][y] = i
+
+                if self.solve_puzzle(board):
+                    self.update_cubes(board)
+                    return True
+
+                board[x][y] = 0
+
+        return False
 
 
-# Main loop
-run = False
-while run:
-    clock.tick(1)  # 1 frame(s) per second
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-            pygame.quit()
-            quit()
+class Cube:
+    rows = 9
+    cols = 9
 
-    draw()
+    def __init__(self, value, row, col, width, height):
+        self.value = value
+        self.temp = 0
+        self.row = row
+        self.col = col
+        self.width = width
+        self.height = height
+        self.selected = False
 
-    pygame.display.update()
+    def draw(self, display):
 
-pygame.quit()
+        x = self.col * scaling
+        y = self.row * scaling
+
+        if self.temp != 0 and self.value == 0:
+            text = FONT.render(str(self.temp), True, (128, 128, 128))
+            display.blit(text, (x + (scaling / 2 - text.get_width() / 2), y + (scaling / 2 - text.get_height() / 2)))
+        elif not (self.value == 0):
+            text = FONT.render(str(self.value), True, (0, 0, 0))
+            display.blit(text, (x + (scaling / 2 - text.get_width() / 2), y + (scaling / 2 - text.get_height() / 2)))
+
+    def set(self, value):
+        self.value = value
+
+    def set_temp(self, value):
+        self.temp = value
+
+
+def redraw_window(display, puzzle):
+    display.fill((255, 255, 255))
+    puzzle.draw(display)
+
+
+def main():  # Main loop
+
+    win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
+    pygame.display.set_caption("Sudoku Solver")
+    puzzle = Puzzle(9, 9, 800, 800)
+    run = True
+
+    while run:
+        clock.tick(10)  # 1 frame(s) per second
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    puzzle.solve_puzzle(puzzle.board)
+                    print("Trying to solve...")
+
+        redraw_window(win, puzzle)
+        pygame.display.update()
+    pygame.quit()
+
+
+main()
